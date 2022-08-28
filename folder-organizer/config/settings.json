@@ -1,0 +1,11 @@
+{
+    "folders": true,
+    "unknownFiles": true,
+    "dontTouch": [
+        "main.py",
+        "config",
+        "icons",
+        "UI"
+    ],
+    "outputName": "Output"
+}

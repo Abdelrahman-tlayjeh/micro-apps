@@ -1,0 +1,24 @@
+{
+    "programs": ["exe", "msi"],
+    "documents": {
+        "pdf": ["pdf", "PDF"],
+        "notes": ["txt"]
+    },
+    "office": {
+        "word": ["doc", "docx"],
+        "excel": ["xls", "xlsx"],
+        "power point": ["pptx"],
+        "access": ["ACCDA", "ACCDB"]
+    },
+    "media": {
+        "images": ["png", "gif", "JPEG", "jpeg"],
+        "videos": ["mp4", "webm"],
+        "audios": ["m4a", "mp3"]
+    },
+    "programming": {
+        "codes": ["py", "js", "cpp", "c", "php", "html", "css"],
+        "db": ["sqlite", "db"],
+        "markdowns": ["md"]
+    },
+    "zip": ["zip", "rar"]
+}
