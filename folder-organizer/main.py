@@ -1,5 +1,5 @@
 from UI.app_ui import Ui_MainWindow, QApplication, QMainWindow
-from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QLineEdit
 from lib.folder_organizer import  FolderOrganizer
 from dialogs.message_dialog import MessageBox
 from dialogs.results_dialog import ResultsDialog
@@ -140,6 +140,12 @@ def _get_selected_content() -> list[DirEntry]:
         return _folder_content
     #return selected
     return [_folder_content[m.row()] for m in ui.content_listWidget.selectedIndexes()]
+
+
+def _select_location(lineEdit:QLineEdit):
+    location =  _getFolderPath()
+    if location:
+        lineEdit.setText(location)
 
 
 #--- Load content ---#
@@ -308,7 +314,7 @@ def move():
 
 #buttons
 ui.move_run_pushButton.clicked.connect(move)
-
+ui.move_browse_location_pushButton.clicked.connect(lambda: _select_location(ui.move_location_lineEdit))
 
 #--- copy ---#
 def copy():
@@ -336,6 +342,7 @@ def copy():
 
 #buttons
 ui.copy_run_pushButton.clicked.connect(copy)
+ui.copy_browse_location_pushButton.clicked.connect(lambda: _select_location(ui.copy_location_lineEdit))
 
 
 #--- Delete ---#
