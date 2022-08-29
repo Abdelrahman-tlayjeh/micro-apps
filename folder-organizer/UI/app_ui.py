@@ -759,7 +759,7 @@ class Ui_MainWindow(object):
         sizePolicy8.setVerticalStretch(0)
         sizePolicy8.setHeightForWidth(self.rename_name_lineEdit.sizePolicy().hasHeightForWidth())
         self.rename_name_lineEdit.setSizePolicy(sizePolicy8)
-        self.rename_name_lineEdit.setMinimumSize(QSize(0, 30))
+        self.rename_name_lineEdit.setMinimumSize(QSize(0, 35))
         self.rename_name_lineEdit.setFont(font5)
         self.rename_name_lineEdit.setReadOnly(False)
 

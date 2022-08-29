@@ -5,7 +5,9 @@
         "main.py",
         "config",
         "icons",
-        "UI"
+        "UI",
+        "dialogs",
+        "lib"
     ],
     "outputName": "Output"
 }

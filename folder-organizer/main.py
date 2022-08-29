@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QFileDialog, QLineEdit
 from lib.folder_organizer import  FolderOrganizer
 from dialogs.message_dialog import MessageBox
 from dialogs.results_dialog import ResultsDialog
+from dialogs.info_dialog import InfoDialog
 from os import DirEntry
 from json import load, dump
 import sys
@@ -196,7 +197,7 @@ def show_results(done_items:int, errors:list):
     ResultsDialog(
                 "Task Finished...",
                 f"{done_items} Successfully moved.",
-                f"{len(errors)} errors occure.",
+                f"{len(errors)} errors.",
                 "\n".join([f"{name} --> {error}" for name, error in errors])
             )
 
@@ -224,7 +225,10 @@ def organize():
 
 #buttons
 ui.org_run_pushButton.clicked.connect(organize)
-ui.org_info_pushButton.clicked.connect(lambda: MessageBox("No Info Yet :("))
+ui.org_info_pushButton.clicked.connect(lambda: InfoDialog("""
+Organizing by extensions will place all files with the same extension in One folder.
+Organizing by categories will place all files with the same category in one folder.(Check config\categories.json)
+""", size=(500, 270)))
 
 
 #--- Rename ---#
@@ -244,7 +248,7 @@ def rename():
     ResultsDialog(
                 "Task Finished...",
                 f"{len(out[0])} Successfully renamed.",
-                f"{len(out[1])} errors occure!",
+                f"{len(out[1])} errors.",
                 "\n".join([f"{name} --> {error}" for name, error in out[1]])
             )
     
@@ -254,7 +258,12 @@ def rename():
 
 #buttons
 ui.rename_run_pushButton.clicked.connect(rename)
-ui.rename_info_pushButton.clicked.connect(lambda: MessageBox("No Info Yet :("))
+ui.rename_info_pushButton.clicked.connect(lambda: InfoDialog("""
+a pattern should be a string with at least one sepecial character such that:
+    - []: to be replaced by an indexe.
+    - {}: to be replaced by the old name.
+[!] If the pattern does not contain any special character and many files are selected, an '[]' will be added automatically at the end of the pattern.
+""", size=(600, 320)))
 
 
 #--- Change extension ---#
@@ -274,7 +283,7 @@ def change_extension():
     ResultsDialog(
             "Task Finished...",
             f"{out[0]} Successfully changed.",
-            f"{len(out[1])} errors occure!",
+            f"{len(out[1])} errors.",
             "\n".join([f"{name} --> {error}" for name, error in out[1]])
             )
 
@@ -284,7 +293,10 @@ def change_extension():
 
 #buttons
 ui.ext_run_pushButton.clicked.connect(change_extension)
-ui.ext_info_pushButton.clicked.connect(lambda: MessageBox("No Info Yet :("))
+ui.ext_info_pushButton.clicked.connect(lambda: InfoDialog("""
+Change the extension of all selected files that have the entered <from> extension to the entered <to> extension.
+e.g: [png] >> [jpeg]
+""", size=(450, 250)))
 
 
 #--- move ---#
@@ -304,7 +316,7 @@ def move():
     ResultsDialog(
             "Task Finished...",
             f"{out[0]} Successfully moved.",
-            f"{len(out[1])} errors occure!",
+            f"{len(out[1])} errors.",
             "\n".join([f"{name} --> {error}" for name, error in out[1]])
             )
 
@@ -333,7 +345,7 @@ def copy():
     ResultsDialog(
             "Task Finished...",
             f"{out[0]} Successfully copied.",
-            f"{len(out[1])} errors occure!",
+            f"{len(out[1])} errors.",
             "\n".join([f"{name} --> {error}" for name, error in out[1]])
             )
 
@@ -356,7 +368,7 @@ def delete():
     ResultsDialog(
             "Task Finished...",
             f"{out[0]} Successfully deleted.",
-            f"{len(out[1])} errors occure!",
+            f"{len(out[1])} errors.",
             "\n".join([f"{name} --> {error}" for name, error in out[1]])
             )
             
@@ -366,7 +378,6 @@ def delete():
 
 #buttons
 ui.delete_run_pushButton.clicked.connect(delete)
-
 
 
 #========== Run ==========#
