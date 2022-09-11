@@ -1,9 +1,10 @@
 from UI.app_ui import Ui_MainWindow, QApplication, QMainWindow, QAbstractTableModel, Qt
 from PySide6.QtWidgets import QFileDialog
+from PySide6.QtGui import QMovie
+from PySide6.QtCore import QThread, QObject, Signal
 from json import load, dump
 from scraper.tables_scraper import TablesScraper, pd
 from dialogs.message_dialog import MessageBox
-from PySide6.QtGui import QMovie
 from os import path, mkdir
 from datetime import datetime
 import  sys
@@ -16,13 +17,82 @@ ui.setupUi(MainWindow)
 _settings:dict
 _currentIndex:int = 0
 _resultsCount:int = 0
+
 _scraper = TablesScraper()
+
 
 #========== navigations buttons ==========#
 ui.start_program_button.clicked.connect(lambda: ui.stackedWidget.setCurrentIndex(2))
 ui.settings_pushButton.clicked.connect(lambda: ui.stackedWidget.setCurrentIndex(1))
 ui.menu_pushButton.clicked.connect(lambda: ui.stackedWidget.setCurrentIndex(0))
 ui.back_pushButton.clicked.connect(lambda: ui.stackedWidget.setCurrentIndex(0))
+ui.about_pushButton.clicked.connect(lambda: ui.stackedWidget.setCurrentIndex(3))
+ui.go_back_pushButton.clicked.connect(lambda: ui.stackedWidget.setCurrentIndex(0))
+
+
+#========== helpers classes ==========#
+#--- Loading handler class---#
+class LoadingIndicator:
+    def __init__(self, starting_text:str) -> None:
+        ui.loading_text_label.setText(starting_text)
+        #indicator
+        self.indicator = QMovie(r"icons\loading_gear.gif")
+        ui.loading_indicator_label.setMovie(self.indicator)
+
+    def start(self):
+        ui.frame.show()
+        self.indicator.start()
+        ui.stackedWidget.setEnabled(False)
+
+    def update_text(self, new_text:str):
+        ui.loading_text_label.setText(new_text)
+
+    def end(self):
+        self.indicator.stop()
+        ui.frame.hide()
+        ui.stackedWidget.setEnabled(True)
+
+
+#init loading indicator
+_loading_indicator = LoadingIndicator("Working...")
+
+#--- table model ---#
+class TableModel(QAbstractTableModel):
+    def __init__(self, data):
+        super(TableModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            value = self._data.iloc[index.row()][index.column()]
+            return value
+    
+    def rowCount(self, index) -> int:
+        return self._data.shape[0]
+
+    def columnCount(self, index) -> int:
+        return self._data.shape[1]
+
+    def clear(self):
+        self.clear()
+
+
+#--- worker class ---#
+class ScrapingWorker(QObject):
+    finished = Signal()
+    output:'str|int'
+
+    def run(self):
+        self.output = _scraper.scrape_tables(ui.url_lineEdit.text().strip(), _settings["visibleOnly"], JsMode=ui.advanced_radioButton.isChecked(), driver_path=_settings["driverPath"], show_browser=_settings["showBrowser"])
+        self.finished.emit()
+
+
+def _init_worker_thread():
+    """init QThread and a Worker each time scraping function is called"""
+    global _scraping_worker, _scraping_thread
+    _scraping_worker = ScrapingWorker()
+    _scraping_thread = QThread()
+    _scraping_worker.moveToThread(_scraping_thread)
 
 
 #========== settings ==========#
@@ -55,6 +125,7 @@ def _update_settings() -> None:
 
 
 def browse_driver_path():
+    """open file dialog to select the driver executable path"""
     path = QFileDialog.getOpenFileName(caption="Select The Driver...", filter="Executable (*.exe)")
     if path:
         ui.driver_path_lineEdit.setText(path[0])
@@ -76,38 +147,23 @@ ui.visible_no_radioButton.clicked.connect(_update_settings)
 
 
 #========== Main ==========#
-#--- table model ---#
-class TableModel(QAbstractTableModel):
-    def __init__(self, data):
-        super(TableModel, self).__init__()
-        self._data = data
-
-    def data(self, index, role):
-        if role == Qt.DisplayRole:
-            value = self._data.iloc[index.row()][index.column()]
-            return value
-    
-    def rowCount(self, index) -> int:
-        return self._data.shape[0]
-
-    def columnCount(self, index) -> int:
-        return self._data.shape[1]
-
-    def clear(self):
-        self.clear()
-
-
 #--- main helpers ---#
-def _display_table():
-    try:
-        table = _scraper._results[_currentIndex]
-    except IndexError:
-        table = pd.DataFrame()
-
+def _clear_table_view():
+    table = pd.DataFrame()
     ui.tableView.setModel(TableModel(table))
 
 
+def _display_table():
+    """show the selected table in the tableView"""
+    try:
+        table = _scraper._results[_currentIndex]
+        ui.tableView.setModel(TableModel(table))
+    except IndexError:
+        _clear_table_view()
+        
+
 def _handle_next_prev_buttons():
+    """disable/enable next/prev buttons"""
     ui.total_results_label.setText(f"/{_resultsCount}")
     ui.current_index_label.setText(f"{_currentIndex + 1 if _resultsCount else 0}")
     if _currentIndex + 1 < _resultsCount:
@@ -121,63 +177,58 @@ def _handle_next_prev_buttons():
         ui.prev_pushButton.setDisabled(True)
 
 
-def _handle_scraper_output(out):
-    global _resultsCount, _currentIndex
-    
-    #error msg
-    if type(out) is str:
-        MessageBox(f"Error: {out}")
-        _resultsCount = 0
-        _currentIndex = 0
-        _handle_next_prev_buttons()
-        _display_table()
-
-        return
-    
-    #if no result
-    if out == 0:
-        MessageBox(f"No Tables found! Re-check the URL or use advanced mode...")
-        _resultsCount = 0
-        _currentIndex = 0
-        _handle_next_prev_buttons()
-        _display_table()
-        return
-
-    #there is results
-    _resultsCount = out
-    _currentIndex = 0
-    _handle_next_prev_buttons()
-    _display_table()
-
-
 def _auto_save():
+    """export all tables as csv files"""
     if not path.exists("History"):
         mkdir("History")
-
+    #export all to csv
     for i in range(_resultsCount):
         file_name = f"{int(datetime.now().timestamp())}_{i}.csv"
         _scraper._results[i].to_csv(rf"History\{file_name}")
 
 
-#--- Loading handler class---#
-class LoadingIndicator:
-    def __init__(self, starting_text:str) -> None:
-        ui.loading_text_label.setText(starting_text)
-        #indicator
-        self.indicator = QMovie(r"icons\loading_gear.gif")
-        ui.loading_indicator_label.setMovie(self.indicator)
-        ui.frame.show()
-        self.indicator.start()
+def _handle_scraper_output(out):
+    """handle the output of scrape function"""
+    global _resultsCount, _currentIndex
 
-    def update_text(self, new_text:str):
-        ui.loading_text_label.setText(new_text)
+    #clear old results
+    _resultsCount, _currentIndex = 0, 0
 
-    def end(self):
-        self.indicator.stop()
-        ui.frame.hide()
+    #error msg
+    if type(out) is str:
+        MessageBox(f"Error: {out}")
+    
+    #if no result
+    elif out == 0:
+        MessageBox(f"An error occur due to one of the following: (1) Bad internet connection | (2) Invalid URL | (3) Website is dynamic or detect bots, and you have to use advanced mode.")
+
+    #there is results
+    else:
+        _resultsCount = out
+        #auto save (if on)
+        if _settings["autoSave"]:
+            _auto_save()
+
+    #finally
+    _handle_next_prev_buttons()
+    _display_table()
+
+
+def _on_scraper_finish(out):
+    """the function that will run when results are ready"""
+    #stop loading indicator
+    _loading_indicator.end()
+    #handle scraping output
+    _handle_scraper_output(out)
+    #stop and delete QThread and Worker
+    _scraping_thread.quit()
+    _scraping_worker.deleteLater()
+    _scraping_thread.deleteLater()
+
 
 #--- main methods ---#
 def next_result():
+    """switch to the next table"""
     global _currentIndex
     _currentIndex += 1
     _display_table()
@@ -185,6 +236,7 @@ def next_result():
 
 
 def prev_result():
+    """switch to the previus table"""
     global _currentIndex
     _currentIndex -= 1
     _display_table()
@@ -192,6 +244,8 @@ def prev_result():
     
     
 def run_scraper():
+    """the main scraping function"""
+    _clear_table_view()
     #check url
     url = ui.url_lineEdit.text().strip()
     if not url:
@@ -202,30 +256,22 @@ def run_scraper():
     if advanced:
         #if driver path is not given
         if not _settings["driverPath"]:
-            MessageBox("The Driver Path is not given! Please enter it from settings in order to use the advanced mode.")
+            MessageBox("The Driver Path is not entered! Please enter it from settings in order to use the advanced mode.")
             ui.settings_pushButton.click()
             return
 
     #show loading indicator
-    loading = LoadingIndicator("Working...")
+    _loading_indicator.start()
 
-    try:
-        QApplication.instance().processEvents() #avoid Testil el GUI
-        out = _scraper.scrape_tables(url, _settings["visibleOnly"], JsMode=advanced, driver_path=_settings["driverPath"], show_browser=_settings["showBrowser"])
-    except Exception as e:
-        out = e
-
-    #hide loading indicator
-    loading.end()
-    
-    #handle the output
-    _handle_scraper_output(out)
-
-    #auto save (if on)
-    if _settings["autoSave"]:
-        _auto_save()
+    #init QThread and Worker
+    _init_worker_thread()
+    #setup signals & slots
+    _scraping_thread.started.connect(_scraping_worker.run)
+    _scraping_worker.finished.connect(lambda: _on_scraper_finish(_scraping_worker.output))
+    _scraping_thread.start()
     
 
+#--- main buttons ---#
 ui.scrape_pushButton.clicked.connect(run_scraper)
 ui.next_pushButton.clicked.connect(next_result)
 ui.prev_pushButton.clicked.connect(prev_result)
@@ -233,11 +279,13 @@ ui.prev_pushButton.clicked.connect(prev_result)
 
 #========== Export ==========#
 def show_selected_extension():
+    """display the selected export file type"""
     ext = ".csv" if ui.csv_radioButton.isChecked() else ".xlsx"
     ui.extension_label.setText(ext)
 
 
 def export():
+    """the main export function"""
     #if there is nothing to export
     if not _resultsCount:
         return
@@ -247,7 +295,7 @@ def export():
     if not name:
         return
 
-    #checck output folder path
+    #check output folder
     if not path.exists("Output"):
         mkdir("Output")
 
@@ -267,8 +315,9 @@ ui.csv_radioButton.clicked.connect(show_selected_extension)
 ui.xlsx_radioButton.clicked.connect(show_selected_extension)
 
 
-    
-#--- Runnnn---#
+
+
+#========== Run ==========#
 def run():
     ui.frame.hide()
     _handle_next_prev_buttons()
