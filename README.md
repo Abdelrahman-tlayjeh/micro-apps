@@ -6,8 +6,8 @@
 A tool that automates some files management tasks.
 
 <p float="left">
-    <img src="folder-organizer/imgs/img_4.png" width="420px">
-    <img src="folder-organizer/imgs/img_5.png" width="420px">
+    <img src="folder-organizer/imgs/img_4.png" width="400px">
+    <img src="folder-organizer/imgs/img_5.png" width="400px">
 </p>
   
   
@@ -15,6 +15,6 @@ A tool that automates some files management tasks.
 A tables scraping tool for both static and dynamic websites.
 
 <p float="left">
-    <img src="tables-scraper/imgs/img_4.png" width="420px">
-    <img src="tables-scraper/imgs/img_6.png" width="420px">
+    <img src="tables-scraper/imgs/img_4.png" width="400px">
+    <img src="tables-scraper/imgs/img_6.png" width="400px">
 </p>
