@@ -1,8 +1,8 @@
 # Micro-Apps
+## Python-based tools for automating some operations.
 
-## GUI-based tools implemented by Python and PySide6 to automate some operations
 
-### - <a href='https://github.com/Abdelrahman-tlayjeh/Micro-Apps/tree/main/folder-organizer'>Folder Organizer:<a/>
+## - <a href='https://github.com/Abdelrahman-tlayjeh/Micro-Apps/tree/main/folder-organizer'>Folder Organizer:<a/>
 A tool that automates some files management tasks.
 
 <p float="left">
@@ -11,8 +11,8 @@ A tool that automates some files management tasks.
 </p>
   
   
-  ### - <a href='https://github.com/Abdelrahman-tlayjeh/Micro-Apps/tree/main/tables-scraper'>Tables Scraper:<a/>
-A tables scraping tool for both static and dynamic websites
+## - <a href='https://github.com/Abdelrahman-tlayjeh/Micro-Apps/tree/main/tables-scraper'>Tables Scraper:<a/>
+A tables scraping tool for both static and dynamic websites.
 
 <p float="left">
     <img src="tables-scraper/imgs/img_4.png" width="470px">
