@@ -1,6 +1,22 @@
 # Micro-Apps
 ## Python-based tools for automating some operations.
 
+## Usage:
+    
+1. navigate to the project directory
+2. install dependencies
+    ```
+    pip install -r requirements.txt
+    ```
+3. start the program
+    ```
+    python main.py
+    ```
+    OR
+    ```
+    python -m main.py
+    ```
+
 
 ## - <a href='https://github.com/Abdelrahman-tlayjeh/Micro-Apps/tree/main/folder-organizer'>Folder Organizer:<a/>
 A tool that automates some files management tasks.
